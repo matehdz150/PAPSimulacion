@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { ParticleField } from './ParticleField';
@@ -60,6 +61,14 @@ export default function Inicio() {
 
       <main className="mx-auto max-w-[1180px] px-7 pb-[90px] pt-16">
         <div className="relative z-[1] mb-14 text-center">
+          <Image
+            src="/iteso-logo.svg"
+            alt="ITESO"
+            width={84}
+            height={84}
+            priority
+            className="mx-auto mb-6 h-[84px] w-[84px] rounded-full shadow-[0_8px_24px_-8px_rgba(12,35,64,.45)] ring-1 ring-[#0c2340]/10"
+          />
           <h1 className="text-[42px] font-bold leading-[1.08] tracking-[-.03em]">Modela, simula, entiende.</h1>
           <p className="mx-auto mt-4 max-w-[560px] text-base text-[#62626c]">
             Cuatro formas de explorar colas y procesos — desde un servidor simple hasta un lienzo donde arrastras tu propio modelo.

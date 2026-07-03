@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -20,12 +21,17 @@ export function Header({ maxWidth = 1320 }: { maxWidth?: number }) {
       <div className="mx-auto flex h-full items-center gap-4 px-7" style={{ maxWidth }}>
         {/* Izquierda: marca */}
         <Link href="/" className="group flex flex-1 items-center gap-2.5 no-underline">
-          <div className="grid h-[30px] w-[30px] flex-none place-items-center rounded-[10px] bg-gradient-to-br from-[#3a3a4d] to-[#18181b] shadow-[inset_0_1px_0_rgba(255,255,255,.14),0_1px_2px_rgba(24,24,27,.18)] transition-transform duration-200 group-hover:scale-105">
-            <span className="h-3 w-3 rotate-45 rounded-[3px] bg-white transition-transform duration-300 group-hover:rotate-[135deg]"></span>
-          </div>
+          <Image
+            src="/iteso-logo.svg"
+            alt="ITESO"
+            width={32}
+            height={32}
+            priority
+            className="h-8 w-8 flex-none rounded-full shadow-[0_1px_2px_rgba(24,24,27,.18)] transition-transform duration-200 group-hover:scale-105"
+          />
           <div className="flex flex-col leading-none">
-            <span className="text-[15px] font-semibold tracking-[-.01em] text-[#18181b]">Discreta</span>
-            <span className="mt-[3px] text-[10.5px] font-medium tracking-[.01em] text-[#9a9aa4]">Simulación de eventos</span>
+            <span className="text-[15px] font-semibold tracking-[-.01em] text-[#18181b]">ITESO</span>
+            <span className="mt-[3px] text-[10.5px] font-medium tracking-[.01em] text-[#9a9aa4]">Simulación PAP</span>
           </div>
         </Link>
 
