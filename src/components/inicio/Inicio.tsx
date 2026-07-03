@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
+import { ParticleField } from './ParticleField';
 
 function ModelCard({
   href,
@@ -53,22 +54,19 @@ const Box = ({ small = false }: { small?: boolean }) => (
 
 export default function Inicio() {
   return (
-    <div className="min-h-screen bg-[#fbfbfc] font-sans text-[#18181b] antialiased [text-rendering:optimizeLegibility]">
+    <div className="relative min-h-screen overflow-hidden bg-[#fbfbfc] font-sans text-[#18181b] antialiased [text-rendering:optimizeLegibility]">
+      <ParticleField />
       <Header maxWidth={1180} />
 
       <main className="mx-auto max-w-[1180px] px-7 pb-[90px] pt-16">
-        <div className="mb-14 text-center">
-          <span className="mb-[18px] inline-flex items-center gap-[7px] rounded-full bg-[#eeeefb] px-[13px] py-[5px] text-[11.5px] font-semibold uppercase tracking-[.06em] text-[#5a5ad6]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#5a5ad6]"></span>
-            Simulación de eventos discretos
-          </span>
+        <div className="relative z-[1] mb-14 text-center">
           <h1 className="text-[42px] font-bold leading-[1.08] tracking-[-.03em]">Modela, simula, entiende.</h1>
           <p className="mx-auto mt-4 max-w-[560px] text-base text-[#62626c]">
             Cuatro formas de explorar colas y procesos — desde un servidor simple hasta un lienzo donde arrastras tu propio modelo.
           </p>
         </div>
 
-        <div className="grid grid-cols-4 gap-[18px]">
+        <div className="relative z-[1] grid grid-cols-4 gap-[18px]">
           <ModelCard
             href="/simple"
             name="Proceso simple"
@@ -164,7 +162,7 @@ export default function Inicio() {
           />
         </div>
 
-        <div className="mt-[46px] text-center text-[12.5px] text-[#9a9aa4]">
+        <div className="relative z-[1] mt-[46px] text-center text-[12.5px] text-[#9a9aa4]">
           Todas las simulaciones corren en el navegador con distribuciones exponenciales.
         </div>
       </main>
