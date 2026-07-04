@@ -5,6 +5,13 @@ export interface ActivityConfig {
   resources: number;
 }
 
+export interface DecisionLabels {
+  rec: string; // "Recepción"
+  repA: string; // actividad de la ruta A
+  repB: string; // actividad de la ruta B
+  pay: string; // "Pago"
+}
+
 export interface DecisionConfig {
   interarrival: number;
   horizon: number;
@@ -13,6 +20,25 @@ export interface DecisionConfig {
   repB: ActivityConfig;
   pay: ActivityConfig;
   pA: number; // % hacia ruta A
+  labels?: DecisionLabels; // nombres editables (solo presentación)
+}
+
+export const DEFAULT_DECISION_LABELS: DecisionLabels = {
+  rec: 'Recepción',
+  repA: 'Actividad A',
+  repB: 'Actividad B',
+  pay: 'Pago',
+};
+
+// Rellena cualquier nombre vacío con su valor por defecto
+export function resolveDecisionLabels(labels?: DecisionLabels): DecisionLabels {
+  const d = DEFAULT_DECISION_LABELS;
+  return {
+    rec: labels?.rec?.trim() || d.rec,
+    repA: labels?.repA?.trim() || d.repA,
+    repB: labels?.repB?.trim() || d.repB,
+    pay: labels?.pay?.trim() || d.pay,
+  };
 }
 
 export interface EntityStageEvent {
@@ -147,11 +173,12 @@ export function simulate(cfg: DecisionConfig, seed: number): SimResult {
     avgSvc: s.done ? s.totSvc / s.done : 0,
     processed: s.done,
   });
+  const L = resolveDecisionLabels(cfg.labels);
   const perStage: StageResult[] = [
-    mk('Recepción', sRec, rec.resources),
-    mk('Reparación Simple', sA, repA.resources),
-    mk('Reparación Compleja', sB, repB.resources),
-    mk('Pago', sPay, pay.resources),
+    mk(L.rec, sRec, rec.resources),
+    mk(L.repA, sA, repA.resources),
+    mk(L.repB, sB, repB.resources),
+    mk(L.pay, sPay, pay.resources),
   ];
   let bn = 0;
   perStage.forEach((p, i) => {
@@ -194,14 +221,14 @@ export function simulate(cfg: DecisionConfig, seed: number): SimResult {
     obsB: N ? (idxB.length / N) * 100 : 0,
     routes: {
       A: {
-        name: 'Reparación Simple',
+        name: L.repA,
         entities: routeStat.A.done,
         assigned: idxA.length,
         avgSys: routeStat.A.done ? routeStat.A.sys / routeStat.A.done : 0,
         avgWait: routeStat.A.done ? routeStat.A.wait / routeStat.A.done : 0,
       },
       B: {
-        name: 'Reparación Compleja',
+        name: L.repB,
         entities: routeStat.B.done,
         assigned: idxB.length,
         avgSys: routeStat.B.done ? routeStat.B.sys / routeStat.B.done : 0,
@@ -217,13 +244,30 @@ export const fmt = (x: number, d = 1) =>
 
 /* ---------------- Exportar a Excel (.xls, HTML table) ---------------- */
 export function exportToExcel(result: SimResult, cfg: DecisionConfig) {
+  const L = resolveDecisionLabels(cfg.labels);
   const n2 = (x: number) => Number(x || 0).toFixed(2);
   const esc = (s: unknown) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-  const summary: [string, string | number][] = [
-    ['Resumen de la simulación', ''],
-    ['Horizonte (min)', result.horizon],
+  // Variables de entrada
+  const input: [string, string | number][] = [
+    ['Variables de entrada', ''],
+    ['Tiempo entre llegadas (media, min)', cfg.interarrival],
+    ['Horizonte (min)', cfg.horizon],
     ['Reparto configurado A / B (%)', `${cfg.pA} / ${100 - cfg.pA}`],
+  ];
+  const inputRows = input.map((r) => `<tr><td style="font-weight:bold">${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('');
+  const inCfgHead = ['Actividad (entrada)', 'Ruta', 'Tiempo de servicio (media, min)', 'Recursos disponibles'];
+  const inCfgHeadRow = `<tr>${inCfgHead.map((h) => `<th style="background:#eeeefb;font-weight:bold">${esc(h)}</th>`).join('')}</tr>`;
+  const inCfg: [string, string, number, number][] = [
+    [L.rec, '—', cfg.rec.service, cfg.rec.resources],
+    [L.repA, 'A', cfg.repA.service, cfg.repA.resources],
+    [L.repB, 'B', cfg.repB.service, cfg.repB.resources],
+    [L.pay, '—', cfg.pay.service, cfg.pay.resources],
+  ];
+  const inCfgRows = inCfg.map((r) => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
+
+  const summary: [string, string | number][] = [
+    ['Variables de salida', ''],
     ['Reparto observado A / B (%)', `${n2(result.obsA)} / ${n2(result.obsB)}`],
     ['Entidades llegadas', result.arrivalsCount],
     ['Entidades procesadas', result.completed],
@@ -252,9 +296,9 @@ export function exportToExcel(result: SimResult, cfg: DecisionConfig) {
 
   const entHead = [
     'Entidad', 'Ruta', 'Llegada (min)',
-    'Recepción · Inicio', 'Recepción · Fin',
-    'Reparación · Inicio', 'Reparación · Fin',
-    'Pago · Inicio', 'Pago · Fin',
+    `${L.rec} · Inicio`, `${L.rec} · Fin`,
+    'Actividad · Inicio', 'Actividad · Fin',
+    `${L.pay} · Inicio`, `${L.pay} · Fin`,
   ];
   const entHeadRow = `<tr>${entHead.map((h) => `<th style="background:#eeeefb;font-weight:bold">${esc(h)}</th>`).join('')}</tr>`;
   const entRows = result.ents
@@ -270,7 +314,8 @@ export function exportToExcel(result: SimResult, cfg: DecisionConfig) {
     `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">` +
     `<head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Con decisión</x:Name>` +
     `<x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>` +
-    `<body><table border="1">${summaryRows}</table><br/><table border="1">${routeHeadRow}${routeRows}</table><br/>` +
+    `<body><table border="1">${inputRows}</table><br/><table border="1">${inCfgHeadRow}${inCfgRows}</table><br/>` +
+    `<table border="1">${summaryRows}</table><br/><table border="1">${routeHeadRow}${routeRows}</table><br/>` +
     `<table border="1">${stageHeadRow}${stageRows}</table><br/><table border="1">${entHeadRow}${entRows}</table></body></html>`;
 
   const blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-excel' });
@@ -292,4 +337,5 @@ export const DEFAULT_CONFIG: DecisionConfig = {
   repB: { service: 40, resources: 2 },
   pay: { service: 6, resources: 2 },
   pA: 60,
+  labels: DEFAULT_DECISION_LABELS,
 };

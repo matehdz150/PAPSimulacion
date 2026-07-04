@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { ActivityConfig, DecisionConfig } from '@/lib/simulate-decision';
+import { DEFAULT_DECISION_LABELS, type ActivityConfig, type DecisionConfig, type DecisionLabels } from '@/lib/simulate-decision';
 
 function CellNum({
   value,
@@ -49,8 +49,8 @@ interface Activity {
 
 const ACTS: Activity[] = [
   { key: 'rec', n: 'Recepción', sub: 'Todas las entidades', dot: '' },
-  { key: 'repA', n: 'Reparación Simple', sub: 'Ruta A', dot: 'A' },
-  { key: 'repB', n: 'Reparación Compleja', sub: 'Ruta B', dot: 'B' },
+  { key: 'repA', n: 'Actividad A', sub: 'Ruta A', dot: 'A' },
+  { key: 'repB', n: 'Actividad B', sub: 'Ruta B', dot: 'B' },
   { key: 'pay', n: 'Pago', sub: 'Convergencia', dot: '' },
 ];
 
@@ -69,6 +69,8 @@ export function ConfigPanel({
 }) {
   const setAct = (act: Activity['key'], key: keyof ActivityConfig, v: number) =>
     setCfg((c) => ({ ...c, [act]: { ...c[act], [key]: v } }));
+  const setActName = (act: keyof DecisionLabels, v: string) =>
+    setCfg((c) => ({ ...c, labels: { ...(c.labels ?? DEFAULT_DECISION_LABELS), [act]: v } }));
   const setPA = (v: number) => setCfg((c) => ({ ...c, pA: Math.max(0, Math.min(100, Math.round(v))) }));
 
   return (
@@ -111,9 +113,15 @@ export function ConfigPanel({
                     >
                       {a.dot || i + 1}
                     </span>
-                    <span className="text-[13.5px] font-medium">
-                      {a.n}
-                      <small className="block text-[11px] font-normal text-[#9a9aa4]">{a.sub}</small>
+                    <span className="min-w-0 flex-1 text-[13.5px] font-medium">
+                      <input
+                        type="text"
+                        value={cfg.labels?.[a.key] ?? a.n}
+                        placeholder={a.n}
+                        onChange={(e) => setActName(a.key, e.target.value)}
+                        className="w-full min-w-0 rounded-md border border-transparent bg-transparent px-1.5 py-1 text-[13.5px] font-medium text-[#18181b] outline-none transition-colors hover:border-[#e1e1e6] focus:border-[#5a5ad6] focus:bg-white focus:shadow-[0_0_0_3px_#eeeefb]"
+                      />
+                      <small className="block px-1.5 text-[11px] font-normal text-[#9a9aa4]">{a.sub}</small>
                     </span>
                   </div>
                 </td>
@@ -172,19 +180,19 @@ export function ConfigPanel({
 
           <div>
             <div className="mb-3.5 text-[11px] font-bold uppercase tracking-[.06em] text-[#9a9aa4]">
-              Compuerta de decisión · ¿Tipo de reparación?
+              Compuerta de decisión · reparto de rutas
             </div>
             <div className="rounded-[11px] border border-[#ececef] bg-[#fafafa] px-[18px] py-4">
               <div className="mb-3.5 flex items-end justify-between">
                 <div className="flex flex-col gap-[3px]">
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
-                    <span className="h-2 w-2 rounded-[3px] bg-[#5a5ad6]"></span>Ruta A · Simple
+                    <span className="h-2 w-2 rounded-[3px] bg-[#5a5ad6]"></span>Ruta A
                   </span>
                   <span className="font-mono text-2xl font-semibold tracking-[-.02em] text-[#5a5ad6]">{cfg.pA}%</span>
                 </div>
                 <div className="flex flex-col items-end gap-[3px] text-right">
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
-                    Ruta B · Compleja<span className="h-2 w-2 rounded-[3px] bg-[#2f9b8e]"></span>
+                    Ruta B<span className="h-2 w-2 rounded-[3px] bg-[#2f9b8e]"></span>
                   </span>
                   <span className="font-mono text-2xl font-semibold tracking-[-.02em] text-[#2f9b8e]">{100 - cfg.pA}%</span>
                 </div>

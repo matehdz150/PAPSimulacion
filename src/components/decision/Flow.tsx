@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { DecisionConfig, SimResult } from '@/lib/simulate-decision';
-import { fmt } from '@/lib/simulate-decision';
+import { fmt, resolveDecisionLabels } from '@/lib/simulate-decision';
 
 export function Flow({
   phase,
@@ -14,6 +14,7 @@ export function Flow({
   cfg: DecisionConfig;
 }) {
   const r = result;
+  const L = resolveDecisionLabels(cfg.labels);
   const utilA = r ? r.perStage[1].util : 0;
   const utilB = r ? r.perStage[2].util : 0;
 
@@ -21,7 +22,7 @@ export function Flow({
     <section className="mb-[22px] rounded-xl border border-[#ececef] bg-white shadow-[0_1px_2px_rgba(24,24,27,.04),0_1px_1px_rgba(24,24,27,.03)]">
       <div className="flex items-center gap-2.5 border-b border-[#ececef] px-5 py-4">
         <span className="text-[11px] font-bold uppercase tracking-[.07em] text-[#9a9aa4]">Modelo</span>
-        <span className="text-[14.5px] font-semibold tracking-[-.01em]">Flujo del proceso · Taller con compuerta de decisión</span>
+        <span className="text-[14.5px] font-semibold tracking-[-.01em]">Flujo del proceso · Compuerta de decisión</span>
         <span className="ml-auto text-[12.5px] text-[#9a9aa4]">Gateway exclusivo (XOR) · 2 rutas</span>
       </div>
 
@@ -69,7 +70,7 @@ export function Flow({
                 <span className="grid h-[19px] w-[19px] flex-none place-items-center rounded-md border border-[#ececef] bg-[#fafafa] font-mono text-[10px] font-bold text-[#9a9aa4]">
                   1
                 </span>
-                <span className="text-[13px] font-semibold tracking-[-.01em]">Recepción</span>
+                <span className="text-[13px] font-semibold tracking-[-.01em]">{L.rec}</span>
               </div>
               <div className="mt-[7px] flex gap-2 font-mono text-[10.5px] text-[#9a9aa4]">
                 <span>
@@ -96,7 +97,7 @@ export function Flow({
             <span className="absolute left-1/2 top-[calc(100%+14px)] -translate-x-1/2 whitespace-nowrap">
               <span className="inline-flex items-center gap-[7px] rounded-full border-[1.5px] border-[#5a5ad6] bg-white px-[13px] py-[5px] text-xs font-semibold text-[#5a5ad6] shadow-[0_1px_2px_rgba(24,24,27,.04)]">
                 <span className="grid h-4 w-4 place-items-center rounded-full bg-[#5a5ad6] text-[11px] font-extrabold text-white">?</span>
-                Tipo de reparación
+Decisión de ruta
               </span>
             </span>
           </div>
@@ -123,7 +124,7 @@ export function Flow({
                 <span className="grid h-[19px] w-[19px] flex-none place-items-center rounded-md border border-[#ececef] bg-[#fafafa] font-mono text-[10px] font-bold text-[#9a9aa4]">
                   2A
                 </span>
-                <span className="text-[13px] font-semibold tracking-[-.01em]">Reparación Simple</span>
+                <span className="text-[13px] font-semibold tracking-[-.01em]">{L.repA}</span>
               </div>
               <div className="mt-[7px] flex gap-2 font-mono text-[10.5px] text-[#9a9aa4]">
                 <span>
@@ -166,7 +167,7 @@ export function Flow({
                 <span className="grid h-[19px] w-[19px] flex-none place-items-center rounded-md border border-[#ececef] bg-[#fafafa] font-mono text-[10px] font-bold text-[#9a9aa4]">
                   2B
                 </span>
-                <span className="text-[13px] font-semibold tracking-[-.01em]">Reparación Compleja</span>
+                <span className="text-[13px] font-semibold tracking-[-.01em]">{L.repB}</span>
               </div>
               <div className="mt-[7px] flex gap-2 font-mono text-[10.5px] text-[#9a9aa4]">
                 <span>
@@ -206,7 +207,7 @@ export function Flow({
                 <span className="grid h-[19px] w-[19px] flex-none place-items-center rounded-md border border-[#ececef] bg-[#fafafa] font-mono text-[10px] font-bold text-[#9a9aa4]">
                   3
                 </span>
-                <span className="text-[13px] font-semibold tracking-[-.01em]">Pago</span>
+                <span className="text-[13px] font-semibold tracking-[-.01em]">{L.pay}</span>
               </div>
               <div className="mt-[7px] flex gap-2 font-mono text-[10.5px] text-[#9a9aa4]">
                 <span>
@@ -241,7 +242,7 @@ export function Flow({
             style={{ left: 484, top: 96 }}
           >
             <span className="h-[7px] w-[7px] rounded-full bg-[#5a5ad6]"></span>
-            Simple{' '}
+            A{' '}
             <b className="font-mono text-[#18181b]">{r ? `${fmt(r.obsA, 0)}%` : `${cfg.pA}%`}</b>
             {r && ` · ${r.countA}`}
           </div>
@@ -250,7 +251,7 @@ export function Flow({
             style={{ left: 484, top: 216 }}
           >
             <span className="h-[7px] w-[7px] rounded-full bg-[#2f9b8e]"></span>
-            Compleja <b className="font-mono text-[#18181b]">{r ? `${fmt(r.obsB, 0)}%` : `${100 - cfg.pA}%`}</b>
+            B <b className="font-mono text-[#18181b]">{r ? `${fmt(r.obsB, 0)}%` : `${100 - cfg.pA}%`}</b>
             {r && ` · ${r.countB}`}
           </div>
         </div>

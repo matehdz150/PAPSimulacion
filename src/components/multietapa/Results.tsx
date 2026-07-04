@@ -58,7 +58,17 @@ function Kpi({
   );
 }
 
-export function Results({ result, stages, runCount }: { result: SimResult; stages: Stage[]; runCount: number }) {
+export function Results({
+  result,
+  stages,
+  interarrival,
+  runCount,
+}: {
+  result: SimResult;
+  stages: Stage[];
+  interarrival: number;
+  runCount: number;
+}) {
   const ents = result.ents;
 
   return (
@@ -73,7 +83,7 @@ export function Results({ result, stages, runCount }: { result: SimResult; stage
       <div className="mb-3.5 mt-7 flex items-center text-[11px] font-bold uppercase tracking-[.07em] text-[#9a9aa4]">
         03 · Resultados de la simulación
         <button
-          onClick={() => exportToExcel(result)}
+          onClick={() => exportToExcel(result, stages, interarrival)}
           className="ml-auto inline-flex h-8 items-center gap-[7px] rounded-lg border border-[#e1e1e6] bg-white px-3 text-xs font-semibold normal-case tracking-normal text-[#62626c] transition-colors hover:border-[#1f9d57] hover:bg-[#e8f6ee] hover:text-[#1f9d57]"
         >
           <span className="relative h-[13px] w-[13px] flex-none rounded-[3px] border-[1.5px] border-current after:absolute after:left-0.5 after:right-0.5 after:top-[5px] after:h-[1.5px] after:bg-current after:shadow-[0_3px_0_currentColor] after:content-['']"></span>

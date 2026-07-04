@@ -323,12 +323,41 @@ export const DEFAULT_EDGES: FreeEdge[] = [
 ];
 
 /* ---------------- Exportar a Excel (.xls, HTML table) ---------------- */
-export function exportToExcel(result: SimResult) {
+export function exportToExcel(result: SimResult, nodes: FreeNodeData[], edges: FreeEdge[]) {
   const n2 = (x: number) => Number(x || 0).toFixed(2);
   const esc = (s: unknown) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const typeLabel: Record<NodeType, string> = { arrival: 'Llegada', activity: 'Actividad', gateway: 'Compuerta', end: 'Fin' };
+  const byId: Record<string, FreeNodeData> = Object.fromEntries(nodes.map((n) => [n.id, n]));
+  const dash = (v: number | undefined) => (v == null ? '—' : v);
+
+  // Variables de entrada
+  const input: [string, string | number][] = [
+    ['Variables de entrada', ''],
+    ['Horizonte (min)', result.horizon],
+    ['Bloques en el modelo', nodes.length],
+    ['Conexiones', edges.length],
+  ];
+  const inputRows = input.map((r) => `<tr><td style="font-weight:bold">${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('');
+
+  const inNodeHead = ['Bloque', 'Tipo', 'Tiempo entre llegadas (min)', 'Tiempo de servicio (min)', 'Recursos', 'Reparto puerto A (%)'];
+  const inNodeHeadRow = `<tr>${inNodeHead.map((h) => `<th style="background:#eeeefb;font-weight:bold">${esc(h)}</th>`).join('')}</tr>`;
+  const inNodeRows = nodes
+    .map(
+      (n) =>
+        `<tr><td>${esc(n.name)}</td><td>${esc(typeLabel[n.type])}</td><td>${dash(n.interarrival)}</td><td>${dash(n.service)}</td><td>${dash(
+          n.resources
+        )}</td><td>${dash(n.splitA)}</td></tr>`
+    )
+    .join('');
+
+  const edgeHead = ['Origen', 'Puerto', 'Destino'];
+  const edgeHeadRow = `<tr>${edgeHead.map((h) => `<th style="background:#eeeefb;font-weight:bold">${esc(h)}</th>`).join('')}</tr>`;
+  const edgeRows = edges
+    .map((e) => `<tr><td>${esc(byId[e.from]?.name ?? e.from)}</td><td>${esc(e.fromPort ?? '—')}</td><td>${esc(byId[e.to]?.name ?? e.to)}</td></tr>`)
+    .join('');
 
   const summary: [string, string | number][] = [
-    ['Resumen de la simulación', ''],
+    ['Variables de salida', ''],
     ['Horizonte (min)', result.horizon],
     ['Entidades generadas', result.arrivalsCount],
     ['Entidades completadas', result.completed],
@@ -362,7 +391,9 @@ export function exportToExcel(result: SimResult) {
     `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">` +
     `<head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Modelado Libre</x:Name>` +
     `<x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>` +
-    `<body><table border="1">${summaryRows}</table><br/><table border="1">${nodeHeadRow}${nodeRows}</table><br/><table border="1">${entHeadRow}${entRows}</table></body></html>`;
+    `<body><table border="1">${inputRows}</table><br/><table border="1">${inNodeHeadRow}${inNodeRows}</table><br/>` +
+    `<table border="1">${edgeHeadRow}${edgeRows}</table><br/><table border="1">${summaryRows}</table><br/>` +
+    `<table border="1">${nodeHeadRow}${nodeRows}</table><br/><table border="1">${entHeadRow}${entRows}</table></body></html>`;
 
   const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel' });
   const url = URL.createObjectURL(blob);

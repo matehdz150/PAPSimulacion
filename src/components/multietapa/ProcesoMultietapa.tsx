@@ -21,6 +21,23 @@ export default function ProcesoMultietapa() {
   const setStageName = (i: number, name: string) =>
     setStages((arr) => arr.map((s, j) => (j === i ? { ...s, name } : s)));
 
+  // Al cambiar la estructura (agregar/quitar etapa) el resultado previo deja de ser válido
+  const resetResult = () => {
+    setResult(null);
+    setPhase('idle');
+  };
+
+  const addStage = () => {
+    setStages((arr) => [...arr, { name: `Etapa ${arr.length + 1}`, service: 10, resources: 1 }]);
+    resetResult();
+  };
+
+  const removeStage = (i: number) => {
+    if (stages.length <= 1) return; // siempre al menos una etapa
+    setStages((arr) => arr.filter((_, j) => j !== i));
+    resetResult();
+  };
+
   const run = () => {
     setPhase('running');
     runIdx.current += 1;
@@ -45,12 +62,14 @@ export default function ProcesoMultietapa() {
           </p>
         </div>
 
-        <Flow phase={phase} result={result} stages={stages} interarrival={interarrival} />
+        <Flow phase={phase} result={result} stages={stages} interarrival={interarrival} onRemoveStage={removeStage} />
 
         <ConfigPanel
           stages={stages}
           setStage={setStage}
           setStageName={setStageName}
+          onAddStage={addStage}
+          onRemoveStage={removeStage}
           interarrival={interarrival}
           setInterarrival={setInterarrival}
           horizon={horizon}
@@ -75,7 +94,7 @@ export default function ProcesoMultietapa() {
             </div>
           </div>
         ) : (
-          <Results result={result} stages={stages} runCount={runIdx.current} />
+          <Results result={result} stages={stages} interarrival={interarrival} runCount={runIdx.current} />
         )}
       </main>
     </div>

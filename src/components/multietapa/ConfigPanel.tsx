@@ -47,6 +47,8 @@ interface ConfigPanelProps {
   stages: Stage[];
   setStage: (i: number, key: 'service' | 'resources', v: number) => void;
   setStageName: (i: number, name: string) => void;
+  onAddStage: () => void;
+  onRemoveStage: (i: number) => void;
   interarrival: number;
   setInterarrival: (v: number) => void;
   horizon: number;
@@ -61,6 +63,8 @@ export function ConfigPanel({
   stages,
   setStage,
   setStageName,
+  onAddStage,
+  onRemoveStage,
   interarrival,
   setInterarrival,
   horizon,
@@ -91,6 +95,7 @@ export function ConfigPanel({
               <th className="border-b border-[#ececef] px-3 pb-2.5 pt-3 text-right text-[11px] font-semibold uppercase tracking-[.04em] text-[#9a9aa4]">
                 Recursos disponibles
               </th>
+              <th className="w-[38px] border-b border-[#ececef] pb-2.5 pt-3"></th>
             </tr>
           </thead>
           <tbody>
@@ -115,10 +120,35 @@ export function ConfigPanel({
                 <td className="border-b border-[#ececef] px-3 py-[9px]">
                   <CellNum value={s.resources} unit="#" integer onChange={(v) => setStage(i, 'resources', v)} min={1} max={20} />
                 </td>
+                <td className="border-b border-[#ececef] py-[9px] pl-1 pr-2 text-right">
+                  <button
+                    type="button"
+                    onClick={() => onRemoveStage(i)}
+                    disabled={stages.length <= 1}
+                    aria-label={`Eliminar ${s.name}`}
+                    title={stages.length <= 1 ? 'Debe quedar al menos una etapa' : 'Eliminar etapa'}
+                    className="grid h-7 w-7 place-items-center rounded-lg border border-[#ececef] bg-white text-[#9a9aa4] transition-colors hover:border-[#e6b3b3] hover:bg-[#fbeaea] hover:text-[#c04747] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-[#ececef] disabled:hover:bg-white disabled:hover:text-[#9a9aa4]"
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                      <path d="M6 6l12 12M18 6L6 18" />
+                    </svg>
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
+
+        <button
+          type="button"
+          onClick={onAddStage}
+          className="mt-3 inline-flex h-9 items-center gap-2 rounded-lg border border-dashed border-[#d3d3f5] bg-[#fafafe] px-3.5 text-[12.5px] font-semibold text-[#5a5ad6] transition-colors hover:border-[#5a5ad6] hover:bg-[#eeeefb]"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Agregar etapa
+        </button>
 
         <div className="mt-5 grid grid-cols-[1fr_1fr_auto] items-end gap-4 border-t border-dashed border-[#e1e1e6] pt-[18px]">
           <div>

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { exportToExcel, fmt, type SimResult } from '@/lib/simulate-simple';
+import { exportToExcel, fmt, initial, plural, type SimLabels, type SimResult } from '@/lib/simulate-simple';
+import { ChartsModal } from './Charts';
 
 function Kpi({ label, value, unit, sub, util }: { label: string; value: React.ReactNode; unit?: string; sub?: string; util?: number }) {
   return (
@@ -28,8 +29,9 @@ function Kpi({ label, value, unit, sub, util }: { label: string; value: React.Re
   );
 }
 
-export function Results({ result, runCount }: { result: SimResult; runCount: number }) {
+export function Results({ result, runCount, labels }: { result: SimResult; runCount: number; labels: SimLabels }) {
   const [view, setView] = useState<'all' | 'wait'>('all');
+  const [showCharts, setShowCharts] = useState(false);
 
   const rows = useMemo(() => {
     if (view === 'wait') return result.rows.filter((r) => r.wait > 0.05);
@@ -49,10 +51,24 @@ export function Results({ result, runCount }: { result: SimResult; runCount: num
           }
         `}</style>
         <Kpi label="Tiempo de espera" value={fmt(result.avgWait)} unit="min" sub="Promedio en cola" />
-        <Kpi label="Autos atendidos" value={result.served} sub={`de ${result.arrivalsCount} llegadas`} />
-        <Kpi label="Utilización mecánico" value={fmt(result.util, 1)} unit="%" util={result.util} />
+        <Kpi label={`${plural(labels.entity)} atendidos`} value={result.served} sub={`de ${result.arrivalsCount} llegadas`} />
+        <Kpi label={`Utilización ${labels.resource.toLowerCase()}`} value={fmt(result.util, 1)} unit="%" util={result.util} />
         <Kpi label="Tiempo en sistema" value={fmt(result.avgSystem)} unit="min" sub="Espera + servicio" />
       </div>
+
+      <div>
+        <button
+          onClick={() => setShowCharts(true)}
+          className="inline-flex h-[38px] items-center gap-2 rounded-[9px] border border-[#e1e1e6] bg-white px-4 text-[13px] font-semibold text-[#62626c] transition-colors hover:border-[#5a5ad6] hover:bg-[#eeeefb] hover:text-[#5a5ad6]"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+          </svg>
+          Ver gráficas
+        </button>
+      </div>
+
+      <ChartsModal open={showCharts} onClose={() => setShowCharts(false)} result={result} labels={labels} />
 
       <section
         className="animate-[fadeUp_.45s_cubic-bezier(.4,0,.2,1)_both] overflow-hidden rounded-xl border border-[#ececef] bg-white shadow-[0_1px_2px_rgba(24,24,27,.04),0_1px_1px_rgba(24,24,27,.03)]"
@@ -96,7 +112,7 @@ export function Results({ result, runCount }: { result: SimResult; runCount: num
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                {['Auto', 'Llegada', 'Inicio servicio', 'Fin servicio', 'Espera'].map((h, i) => (
+                {[labels.entity, 'Llegada', 'Inicio servicio', 'Fin servicio', 'Espera'].map((h, i) => (
                   <th
                     key={h}
                     className={
@@ -114,9 +130,9 @@ export function Results({ result, runCount }: { result: SimResult; runCount: num
                 <tr key={r.car} className="hover:[&>td]:bg-[#fafafb]">
                   <td className="border-b border-[#ececef] px-[18px] py-[11px] text-left font-sans text-[13px] font-medium tracking-[-.01em] text-[#18181b]">
                     <span className="inline-flex items-center gap-[9px]">
-                      Auto {r.car}
+                      {labels.entity} {r.car}
                       <span className="rounded-md border border-[#ececef] bg-[#fafafa] px-[7px] py-0.5 font-mono text-[11px] text-[#62626c]">
-                        M{r.mech}
+                        {initial(labels.resource)}{r.mech}
                       </span>
                     </span>
                   </td>

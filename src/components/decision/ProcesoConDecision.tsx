@@ -38,11 +38,11 @@ export default function ProcesoConDecision() {
 
       <main className="mx-auto max-w-[1320px] px-7 pb-[90px] pt-[30px]">
         <div className="mb-6">
-          <h1 className="text-[23px] font-bold tracking-[-.02em]">Proceso con decisión — Rutas de reparación</h1>
+          <h1 className="text-[23px] font-bold tracking-[-.02em]">Proceso con decisión — Rutas alternativas</h1>
           <p className="mt-1 max-w-[780px] text-sm text-[#62626c]">
-            Una compuerta de decisión divide el flujo en dos rutas con recursos independientes que convergen en el
-            Pago. Analiza cómo el reparto de la decisión afecta las esperas, la utilización y el desempeño global del
-            sistema.
+            Una compuerta de decisión divide el flujo en dos rutas con recursos independientes que convergen en una
+            etapa final. Analiza cómo el reparto de la decisión afecta las esperas, la utilización y el desempeño global
+            del sistema.
           </p>
         </div>
 

@@ -1,10 +1,17 @@
 // Motor de simulación de eventos discretos — proceso simple (cola M/M/c)
 
+export interface SimLabels {
+  entity: string; // entidad que llega (p.ej. "Auto")
+  activity: string; // actividad/servicio (p.ej. "Reparación")
+  resource: string; // recurso/servidor (p.ej. "Mecánico")
+}
+
 export interface SimConfig {
   interarrival: number; // media entre llegadas (min)
   service: number; // media de servicio (min)
   mechanics: number; // servidores en paralelo
   horizon: number; // horizonte de simulación (min)
+  labels?: SimLabels; // nombres editables (solo presentación)
 }
 
 export interface SimRow {
@@ -92,24 +99,34 @@ export function simulate({ interarrival, service, mechanics, horizon }: SimConfi
 export const fmt = (x: number, d = 1) =>
   Number(x).toLocaleString('es', { minimumFractionDigits: d, maximumFractionDigits: d });
 
+export const DEFAULT_LABELS: SimLabels = { entity: 'Auto', activity: 'Reparación', resource: 'Mecánico' };
+// Plural sencillo en español (suficiente para las etiquetas)
+export const plural = (s: string) => {
+  const t = s.trim();
+  return /s$/i.test(t) ? t : t + 's';
+};
+// Inicial para la etiqueta corta del recurso (p.ej. "Mecánico" -> "M")
+export const initial = (s: string) => s.trim().charAt(0).toUpperCase() || 'R';
+
 /* ---------------- Exportar a Excel (.xls, HTML table) ---------------- */
 export function exportToExcel(result: SimResult) {
+  const L = result.labels ?? DEFAULT_LABELS;
   const n2 = (x: number) => Number(x).toFixed(2);
   const esc = (s: unknown) =>
     String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const head = ['Auto', 'Mecánico', 'Llegada (min)', 'Inicio servicio (min)', 'Fin servicio (min)', 'Espera (min)'];
+  const head = [L.entity, L.resource, 'Llegada (min)', 'Inicio servicio (min)', 'Fin servicio (min)', 'Espera (min)'];
 
   const summary: [string, string | number][] = [
     ['Resumen de la simulación', ''],
     ['Tiempo entre llegadas (media, min)', result.interarrival],
-    ['Tiempo de reparación (media, min)', result.service],
-    ['Mecánicos disponibles', result.mechanics],
+    [`Tiempo de ${L.activity.toLowerCase()} (media, min)`, result.service],
+    [`${plural(L.resource)} disponibles`, result.mechanics],
     ['Horizonte (min)', result.horizon],
-    ['Autos llegados', result.arrivalsCount],
-    ['Autos atendidos', result.served],
+    [`${plural(L.entity)} llegados`, result.arrivalsCount],
+    [`${plural(L.entity)} atendidos`, result.served],
     ['Tiempo de espera promedio (min)', n2(result.avgWait)],
     ['Tiempo en sistema promedio (min)', n2(result.avgSystem)],
-    ['Utilización del mecánico (%)', n2(result.util)],
+    [`Utilización del ${L.resource.toLowerCase()} (%)`, n2(result.util)],
   ];
 
   const summaryRows = summary
@@ -119,7 +136,7 @@ export function exportToExcel(result: SimResult) {
   const bodyRows = result.rows
     .map(
       (r) =>
-        `<tr><td>${r.car}</td><td>M${r.mech}</td><td>${n2(r.arrival)}</td><td>${n2(r.start)}</td><td>${n2(r.end)}</td><td>${n2(r.wait)}</td></tr>`
+        `<tr><td>${r.car}</td><td>${initial(L.resource)}${r.mech}</td><td>${n2(r.arrival)}</td><td>${n2(r.start)}</td><td>${n2(r.end)}</td><td>${n2(r.wait)}</td></tr>`
     )
     .join('');
 

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { DecisionConfig, SimResult } from '@/lib/simulate-decision';
-import { exportToExcel, fmt } from '@/lib/simulate-decision';
+import { exportToExcel, fmt, resolveDecisionLabels } from '@/lib/simulate-decision';
 
 function Kpi({
   label,
@@ -68,6 +68,7 @@ function Kpi({
 
 export function Results({ result, cfg, runCount }: { result: SimResult; cfg: DecisionConfig; runCount: number }) {
   const ents = result.ents;
+  const L = resolveDecisionLabels(cfg.labels);
 
   return (
     <div className="animate-[fadeUp_.45s_cubic-bezier(.4,0,.2,1)_both]">
@@ -122,7 +123,7 @@ export function Results({ result, cfg, runCount }: { result: SimResult; cfg: Dec
           <div className="border-r border-[#ececef] p-[22px_24px]">
             <div className="flex items-center gap-2.5 text-[13px] font-semibold">
               <span className="rounded-full bg-[#5a5ad6] px-2 py-0.5 text-[10px] font-bold text-white">RUTA A</span>
-              Reparación Simple
+              {L.repA}
             </div>
             <div className="mt-3.5 font-mono text-[38px] font-semibold leading-none tracking-[-.03em] [font-variant-numeric:tabular-nums]">
               {result.countA}
@@ -146,7 +147,7 @@ export function Results({ result, cfg, runCount }: { result: SimResult; cfg: Dec
           <div className="p-[22px_24px]">
             <div className="flex items-center gap-2.5 text-[13px] font-semibold">
               <span className="rounded-full bg-[#2f9b8e] px-2 py-0.5 text-[10px] font-bold text-white">RUTA B</span>
-              Reparación Compleja
+              {L.repB}
             </div>
             <div className="mt-3.5 font-mono text-[38px] font-semibold leading-none tracking-[-.03em] [font-variant-numeric:tabular-nums]">
               {result.countB}
@@ -328,13 +329,13 @@ export function Results({ result, cfg, runCount }: { result: SimResult; cfg: Dec
                   Llegada
                 </th>
                 <th colSpan={2} className="sticky top-0 z-[3] whitespace-nowrap border-b border-l border-[#ececef] bg-[#fafafa] px-3.5 py-2 text-center text-[10.5px] font-semibold uppercase tracking-[.03em] text-[#9a9aa4]">
-                  Recepción
+                  {L.rec}
                 </th>
                 <th colSpan={2} className="sticky top-0 z-[3] whitespace-nowrap border-b border-l border-[#ececef] bg-[#fafafa] px-3.5 py-2 text-center text-[10.5px] font-semibold uppercase tracking-[.03em] text-[#9a9aa4]">
-                  Reparación
+                  Actividad
                 </th>
                 <th colSpan={2} className="sticky top-0 z-[3] whitespace-nowrap border-b border-l border-[#ececef] bg-[#fafafa] px-3.5 py-2 text-center text-[10.5px] font-semibold uppercase tracking-[.03em] text-[#9a9aa4]">
-                  Pago
+                  {L.pay}
                 </th>
               </tr>
               <tr>

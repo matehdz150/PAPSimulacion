@@ -8,16 +8,17 @@ interface FlowProps {
   result: SimResult | null;
   stages: Stage[];
   interarrival: number;
+  onRemoveStage: (i: number) => void;
 }
 
-export function Flow({ phase, result, stages, interarrival }: FlowProps) {
+export function Flow({ phase, result, stages, interarrival, onRemoveStage }: FlowProps) {
   const active = phase !== 'idle';
 
   return (
     <section className="mb-[22px] rounded-xl border border-[#ececef] bg-white shadow-[0_1px_2px_rgba(24,24,27,.04),0_1px_1px_rgba(24,24,27,.03)]">
       <div className="flex items-center gap-2.5 border-b border-[#ececef] px-5 py-4">
         <span className="text-[11px] font-bold uppercase tracking-[.07em] text-[#9a9aa4]">Modelo</span>
-        <span className="text-[14.5px] font-semibold tracking-[-.01em]">Flujo del proceso · Taller mecánico completo</span>
+        <span className="text-[14.5px] font-semibold tracking-[-.01em]">Flujo del proceso · Cola en tándem</span>
         <span className="ml-auto text-[12.5px] text-[#9a9aa4]">Cola en tándem · {stages.length} actividades</span>
       </div>
 
@@ -61,7 +62,7 @@ export function Flow({ phase, result, stages, interarrival }: FlowProps) {
                   ></span>
                 </div>
 
-                <div className="flex flex-col items-center gap-[11px]">
+                <div className="group flex flex-col items-center gap-[11px]">
                   <div
                     className={
                       'relative min-h-[86px] w-[158px] rounded-[13px] border-[1.5px] p-[13px_14px] shadow-[0_1px_2px_rgba(24,24,27,.04),0_1px_1px_rgba(24,24,27,.03)] transition-shadow duration-200 ' +
@@ -72,6 +73,19 @@ export function Flow({ phase, result, stages, interarrival }: FlowProps) {
                         : 'border-[#e1e1e6] bg-white')
                     }
                   >
+                    {stages.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => onRemoveStage(i)}
+                        aria-label={`Eliminar ${s.name}`}
+                        title="Eliminar etapa"
+                        className="absolute -right-2 -top-2 z-[3] grid h-[22px] w-[22px] place-items-center rounded-full border border-[#e1e1e6] bg-white text-[#9a9aa4] opacity-0 shadow-[0_1px_2px_rgba(24,24,27,.08)] transition-all hover:border-[#e6b3b3] hover:bg-[#fbeaea] hover:text-[#c04747] group-hover:opacity-100"
+                      >
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
+                          <path d="M6 6l12 12M18 6L6 18" />
+                        </svg>
+                      </button>
+                    )}
                     {isBn && (
                       <span className="absolute -top-2.5 left-3 inline-flex items-center gap-1 rounded-full bg-[#c0782d] py-0.5 pl-[7px] pr-[9px] text-[10px] font-semibold text-white shadow-[0_1px_2px_rgba(24,24,27,.04)] before:h-[5px] before:w-[5px] before:rounded-full before:bg-white">
                         Cuello de botella

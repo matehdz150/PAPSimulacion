@@ -146,12 +146,24 @@ export const fmt = (x: number, d = 1) =>
   Number(x).toLocaleString('es', { minimumFractionDigits: d, maximumFractionDigits: d });
 
 /* ---------------- Exportar a Excel (.xls, HTML table) ---------------- */
-export function exportToExcel(result: SimResult) {
+export function exportToExcel(result: SimResult, stages: Stage[], interarrival: number) {
   const n2 = (x: number) => Number(x || 0).toFixed(2);
   const esc = (s: unknown) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+  // Variables de entrada
+  const input: [string, string | number][] = [
+    ['Variables de entrada', ''],
+    ['Tiempo entre llegadas (media, min)', interarrival],
+    ['Horizonte (min)', result.horizon],
+    ['Número de etapas', stages.length],
+  ];
+  const inputRows = input.map((r) => `<tr><td style="font-weight:bold">${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('');
+  const inCfgHead = ['Actividad (entrada)', 'Tiempo de servicio (media, min)', 'Recursos disponibles'];
+  const inCfgHeadRow = `<tr>${inCfgHead.map((h) => `<th style="background:#eeeefb;font-weight:bold">${esc(h)}</th>`).join('')}</tr>`;
+  const inCfgRows = stages.map((s) => `<tr><td>${esc(s.name)}</td><td>${s.service}</td><td>${s.resources}</td></tr>`).join('');
+
   const summary: [string, string | number][] = [
-    ['Resumen de la simulación', ''],
+    ['Variables de salida', ''],
     ['Horizonte (min)', result.horizon],
     ['Entidades llegadas', result.arrivalsCount],
     ['Entidades procesadas', result.completed],
@@ -182,7 +194,9 @@ export function exportToExcel(result: SimResult) {
     `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">` +
     `<head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Multietapa</x:Name>` +
     `<x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>` +
-    `<body><table border="1">${summaryRows}</table><br/><table border="1">${stageHeadRow}${stageRows}</table><br/><table border="1">${entHeadRow}${entRows}</table></body></html>`;
+    `<body><table border="1">${inputRows}</table><br/><table border="1">${inCfgHeadRow}${inCfgRows}</table><br/>` +
+    `<table border="1">${summaryRows}</table><br/><table border="1">${stageHeadRow}${stageRows}</table><br/>` +
+    `<table border="1">${entHeadRow}${entRows}</table></body></html>`;
 
   const blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-excel' });
   const url = URL.createObjectURL(blob);
@@ -196,8 +210,8 @@ export function exportToExcel(result: SimResult) {
 }
 
 export const DEFAULT_STAGES: Stage[] = [
-  { name: 'Recepción', service: 5, resources: 1 },
-  { name: 'Diagnóstico', service: 15, resources: 2 },
-  { name: 'Reparación', service: 30, resources: 3 },
-  { name: 'Pago', service: 6, resources: 1 },
+  { name: 'Etapa 1', service: 5, resources: 1 },
+  { name: 'Etapa 2', service: 15, resources: 2 },
+  { name: 'Etapa 3', service: 30, resources: 3 },
+  { name: 'Etapa 4', service: 6, resources: 1 },
 ];

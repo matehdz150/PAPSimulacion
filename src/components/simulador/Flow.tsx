@@ -1,9 +1,17 @@
 'use client';
 
 import React from 'react';
-import type { SimResult } from '@/lib/simulate-simple';
+import { plural, type SimLabels, type SimResult } from '@/lib/simulate-simple';
 
-export function Flow({ phase, result }: { phase: 'idle' | 'running' | 'done'; result: SimResult | null }) {
+export function Flow({
+  phase,
+  result,
+  labels,
+}: {
+  phase: 'idle' | 'running' | 'done';
+  result: SimResult | null;
+  labels: SimLabels;
+}) {
   const active = phase !== 'idle';
   const running = phase === 'running';
 
@@ -51,9 +59,11 @@ export function Flow({ phase, result }: { phase: 'idle' | 'running' | 'done'; re
             >
               <span className={'h-[18px] w-[18px] rounded-full ' + (active ? 'bg-[#5a5ad6]' : 'bg-[#9a9aa4]')}></span>
             </div>
-            <span className="text-[12.5px] font-medium text-[#62626c]">Llegada de Auto</span>
+            <span className="text-[12.5px] font-medium text-[#62626c]">Llegada de {labels.entity}</span>
             {result && (
-              <span className="font-mono text-[11px] text-[#9a9aa4]">{result.arrivalsCount} autos</span>
+              <span className="font-mono text-[11px] text-[#9a9aa4]">
+                {result.arrivalsCount} {plural(labels.entity).toLowerCase()}
+              </span>
             )}
           </div>
 
@@ -87,10 +97,10 @@ export function Flow({ phase, result }: { phase: 'idle' | 'running' | 'done'; re
                 <span className="grid h-6 w-6 flex-none place-items-center rounded-[7px] bg-[#eeeefb]">
                   <i className="block h-[9px] w-[9px] rounded-[2px] border-2 border-[#5a5ad6]"></i>
                 </span>
-                <span className="text-[15px] font-semibold tracking-[-.01em]">Reparación</span>
+                <span className="text-[15px] font-semibold tracking-[-.01em]">{labels.activity}</span>
               </div>
               <div className="mt-[9px] text-[11.5px] font-semibold uppercase tracking-[.03em] text-[#9a9aa4]">
-                Actividad · {result ? result.mechanics : '—'} mecánico(s)
+                Actividad · {result ? result.mechanics : '—'} {labels.resource.toLowerCase()}(s)
               </div>
             </div>
             <span className="text-[12.5px] font-medium text-[#62626c]">Servicio</span>

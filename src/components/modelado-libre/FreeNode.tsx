@@ -64,7 +64,7 @@ export function FreeNode({ node, onDragStart, onPortDown, onUpdate, onDelete, on
   if (node.type === 'arrival') {
     const tp = info as ThroughputInfo | undefined;
     return (
-      <div className="absolute z-[2] select-none" style={{ left: node.x, top: node.y, width: CIRC }}>
+      <div data-fnode className="absolute z-[2] select-none" style={{ left: node.x, top: node.y, width: CIRC }}>
         <ToolIcons id={node.id} onDuplicate={onDuplicate} onDelete={onDelete} />
         <div
           className="grid h-16 w-16 cursor-grab place-items-center rounded-full border-[1.5px] border-[#e1e1e6] bg-white shadow-[0_1px_2px_rgba(24,24,27,.04)] active:cursor-grabbing"
@@ -100,7 +100,7 @@ export function FreeNode({ node, onDragStart, onPortDown, onUpdate, onDelete, on
   if (node.type === 'end') {
     const tp = info as ThroughputInfo | undefined;
     return (
-      <div className="absolute z-[2] select-none" style={{ left: node.x, top: node.y, width: CIRC }}>
+      <div data-fnode className="absolute z-[2] select-none" style={{ left: node.x, top: node.y, width: CIRC }}>
         <ToolIcons id={node.id} onDuplicate={onDuplicate} onDelete={onDelete} />
         <div
           className="grid h-16 w-16 cursor-grab place-items-center rounded-full border-[3px] border-[#cfcfd6] bg-white active:cursor-grabbing"
@@ -125,7 +125,7 @@ export function FreeNode({ node, onDragStart, onPortDown, onUpdate, onDelete, on
   if (node.type === 'gateway') {
     const a = node.splitA ?? 50;
     return (
-      <div className="absolute z-[2] select-none" style={{ left: node.x, top: node.y, width: GW }}>
+      <div data-fnode className="absolute z-[2] select-none" style={{ left: node.x, top: node.y, width: GW }}>
         <ToolIcons id={node.id} onDuplicate={onDuplicate} onDelete={onDelete} />
         <div className="relative grid h-[92px] w-[92px] place-items-center">
           <div
@@ -176,7 +176,7 @@ export function FreeNode({ node, onDragStart, onPortDown, onUpdate, onDelete, on
   const stat = info as NodeStat | undefined;
   const util = stat ? stat.util : 0;
   return (
-    <div className="absolute z-[2] select-none" style={{ left: node.x, top: node.y, width: ACT_W }}>
+    <div data-fnode className="absolute z-[2] select-none" style={{ left: node.x, top: node.y, width: ACT_W }}>
       <ToolIcons id={node.id} onDuplicate={onDuplicate} onDelete={onDelete} />
       <div
         className={
