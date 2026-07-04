@@ -57,8 +57,22 @@ export function Header({ maxWidth = 1320 }: { maxWidth?: number }) {
           })}
         </nav>
 
-        {/* Derecha: espaciador para centrar la navegación */}
-        <div className="flex flex-1 justify-end"></div>
+        {/* Derecha: enlace a documentación */}
+        <div className="flex flex-1 justify-end">
+          <Link
+            href="/documentacion"
+            aria-current={pathname === '/documentacion' ? 'page' : undefined}
+            className={
+              'inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[12.5px] font-medium no-underline transition-colors ' +
+              (pathname === '/documentacion' ? 'text-[#5a5ad6]' : 'text-[#9a9aa4] hover:text-[#62626c]')
+            }
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H14l4 4v10.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5zM14 4v4h4M8 13h6M8 16.5h6" />
+            </svg>
+            Documentación
+          </Link>
+        </div>
       </div>
     </header>
   );
