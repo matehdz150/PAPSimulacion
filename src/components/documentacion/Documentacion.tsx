@@ -35,6 +35,19 @@ const SECTIONS = [
       { id: 'servicio-web', label: '4.2 Servicio web' },
     ],
   },
+  {
+    title: '5 · Motor de simulación',
+    items: [
+      { id: 'motor-arquitectura', label: '5.1 Arquitectura del motor' },
+      { id: 'motor-prng', label: '5.2 PRNG y transformada inversa' },
+      { id: 'motor-llegadas', label: '5.3 Generación de llegadas' },
+      { id: 'motor-servidores', label: '5.4 Asignación de servidores' },
+      { id: 'motor-tandem', label: '5.5 Colas en tándem' },
+      { id: 'motor-decision', label: '5.6 Enrutamiento por decisión' },
+      { id: 'motor-eventos', label: '5.7 Motor por eventos (heap)' },
+      { id: 'motor-metricas', label: '5.8 Cálculo de métricas' },
+    ],
+  },
 ];
 
 const ALL_IDS = SECTIONS.flatMap((s) => s.items.map((i) => i.id));
@@ -63,6 +76,16 @@ function Formula({ children }: { children: React.ReactNode }) {
 }
 function Bullets({ children }: { children: React.ReactNode }) {
   return <ul className="mb-4 max-w-[720px] space-y-2">{children}</ul>;
+}
+function Code({ caption, children }: { caption?: string; children: string }) {
+  return (
+    <figure className="my-4 max-w-[760px]">
+      <pre className="overflow-x-auto rounded-xl border border-[#26263a] bg-[#1c1c28] p-4 text-[12.5px] leading-[1.65]">
+        <code className="font-mono text-[#e4e4ea]">{children}</code>
+      </pre>
+      {caption && <figcaption className="mt-1.5 px-1 text-[11.5px] text-[#9a9aa4]">{caption}</figcaption>}
+    </figure>
+  );
 }
 
 export default function Documentacion() {
@@ -288,6 +311,154 @@ export default function Documentacion() {
             <Term term="Alternativa self-host">build de producción (npm run build) servido con Node.js (npm run start), opcionalmente detrás de un proxy inverso como Nginx o IIS sobre Windows Server.</Term>
             <Term term="Estado actual">desarrollo local con npm run dev; build de producción verificado y funcional.</Term>
           </Bullets>
+
+          {/* 5. Motor de simulación */}
+          <H2>5 · Motor de simulación (código)</H2>
+
+          <H3 id="motor-arquitectura">5.1 Arquitectura del motor</H3>
+          <P>
+            El motor vive en cuatro módulos de TypeScript puros, sin dependencias externas:{' '}
+            <span className="font-mono text-[13px]">simulate-simple.ts</span>,{' '}
+            <span className="font-mono text-[13px]">simulate-multietapa.ts</span>,{' '}
+            <span className="font-mono text-[13px]">simulate-decision.ts</span> y{' '}
+            <span className="font-mono text-[13px]">simulate-freeform.ts</span>. Cada uno exporta una función que recibe la
+            configuración y una <b className="font-semibold text-[#18181b]">semilla</b>, y devuelve un objeto con la traza de
+            eventos y las métricas de salida. Al ser funciones puras y deterministas —misma semilla, mismo resultado— cada
+            corrida es reproducible, lo que facilita depurar y comparar escenarios.
+          </P>
+          <P>
+            Los tres primeros modelos usan un enfoque analítico por entidad (procesan las llegadas en orden y calculan
+            tiempos con la disponibilidad de servidores); el de modelado libre implementa una simulación por eventos
+            discretos con una cola de eventos priorizada.
+          </P>
+
+          <H3 id="motor-prng">5.2 PRNG y transformada inversa</H3>
+          <P>
+            El generador base es <span className="font-mono text-[13px]">mulberry32</span>: un PRNG de 32 bits, rápido y
+            sembrable, que produce un número uniforme en <span className="font-mono">[0, 1)</span>. A partir de él, la
+            función <span className="font-mono">exp()</span> aplica la transformada inversa de la exponencial.
+          </P>
+          <Code caption="Generador pseudoaleatorio determinista y muestreo exponencial por transformada inversa.">{`function mulberry32(a: number) {
+  return function () {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296; // U en [0, 1)
+  };
+}
+
+const rng = mulberry32(seed);
+const exp = (mean: number) => -mean * Math.log(1 - rng()); // X = -media·ln(1-U)`}</Code>
+
+          <H3 id="motor-llegadas">5.3 Generación de llegadas (proceso de Poisson)</H3>
+          <P>
+            Las llegadas se generan acumulando tiempos entre llegadas exponenciales hasta rebasar el horizonte. Esto
+            produce un proceso de Poisson: instantes de llegada con interllegadas exponenciales.
+          </P>
+          <Code>{`const arrivals: number[] = [];
+let t = 0;
+while (true) {
+  t += exp(interarrival);  // siguiente interllegada
+  if (t > horizon) break;  // se detiene al llegar al horizonte
+  arrivals.push(t);
+}`}</Code>
+
+          <H3 id="motor-servidores">5.4 Asignación de servidores (M/M/c)</H3>
+          <P>
+            Con <span className="font-mono">c</span> servidores en paralelo se mantiene un arreglo{' '}
+            <span className="font-mono">serverFree</span> con el instante en que cada servidor queda libre. Para cada
+            entidad se elige el servidor que se libera primero; el inicio del servicio es el máximo entre la llegada y esa
+            liberación, y la espera es la diferencia con la llegada.
+          </P>
+          <Code caption="Núcleo de la cola M/M/c: selección del servidor más pronto disponible.">{`const serverFree = new Array(mechanics).fill(0);
+for (let i = 0; i < arrivals.length; i++) {
+  const a = arrivals[i];
+  let s = 0;                                    // servidor que se libera antes
+  for (let k = 1; k < mechanics; k++)
+    if (serverFree[k] < serverFree[s]) s = k;
+  const start = Math.max(a, serverFree[s]);     // espera si aún está ocupado
+  const dur = exp(service);
+  const end = start + dur;
+  serverFree[s] = end;                          // el servidor queda ocupado hasta 'end'
+  const wait = start - a;                       // tiempo en cola
+}`}</Code>
+
+          <H3 id="motor-tandem">5.5 Colas en tándem (multietapa)</H3>
+          <P>
+            El modelo multietapa encadena varias colas: la salida de una etapa es la llegada a la siguiente. Se lleva un
+            arreglo <span className="font-mono">ready</span> con el instante en que cada entidad está lista para la etapa
+            actual; tras servir la etapa, ese valor se actualiza al fin de servicio.
+          </P>
+          <Code>{`let ready = arrivals.slice();          // llegada a la etapa actual
+stages.forEach((stg, s) => {
+  const free = new Array(stg.resources).fill(0);
+  // ...misma lógica de asignación de servidores que en M/M/c...
+  ready[i] = end;                      // salida de la etapa = llegada a la siguiente
+});`}</Code>
+
+          <H3 id="motor-decision">5.6 Enrutamiento por decisión (compuerta XOR)</H3>
+          <P>
+            En el modelo con decisión, cada entidad se asigna a la ruta A o B en la llegada según la probabilidad{' '}
+            <span className="font-mono">pA</span>. Luego se reutiliza el mismo motor de servidores por etapa
+            (<span className="font-mono">runStage</span>): recepción y pago procesan a todas las entidades, mientras que
+            cada ruta procesa solo las suyas.
+          </P>
+          <Code caption="Asignación de ruta y ejecución de las cuatro etapas; A y B convergen en el pago.">{`route: rng() * 100 < pA ? 'A' : 'B'   // decisión al llegar
+
+runStage(all,  ready, rec.resources,  rec.service,  ...); // Recepción (todas)
+runStage(idxA, ready, repA.resources, repA.service, ...); // Ruta A
+runStage(idxB, ready, repB.resources, repB.service, ...); // Ruta B
+runStage(all,  ready, pay.resources,  pay.service,  ...); // Pago (convergen)`}</Code>
+
+          <H3 id="motor-eventos">5.7 Motor por eventos con min-heap (modelado libre)</H3>
+          <P>
+            El modelado libre sí es una simulación por eventos discretos "de verdad": mantiene una cola de eventos como
+            un <b className="font-semibold text-[#18181b]">min-heap binario</b> ordenado por tiempo y avanza siempre al
+            próximo evento. Hay dos tipos de evento: <span className="font-mono">enter</span> (una entidad entra a un
+            bloque) y <span className="font-mono">depart</span> (termina el servicio). Los gateways enrutan al instante;
+            las actividades ocupan un servidor si hay capacidad o, si no, encolan.
+          </P>
+          <Code caption="Bucle principal dirigido por eventos y lógica de entrada a una actividad.">{`while (events.length) {
+  const ev = heapPop(events);   // evento con el menor tiempo
+  if (ev.kind === 'enter') enter(ev.entityId, ev.nodeId, ev.time);
+  else depart(ev);
+}
+
+function enter(id, nodeId, time) {
+  const node = byId[nodeId];
+  if (node.type === 'gateway') { /* elige puerto A o B por probabilidad */ }
+  if (node.type === 'activity') {
+    if (rt.busy < cap) {                 // hay servidor libre -> se atiende
+      rt.busy++;
+      const end = time + exp(node.service);
+      heapPush(events, { time: end, kind: 'depart', nodeId, entityId: id });
+    } else {
+      rt.queue.push({ entityId: id, enq: time }); // si no, a la cola
+    }
+  }
+}`}</Code>
+          <P>
+            Al ocurrir un <span className="font-mono">depart</span>, se libera el servidor, se toma el siguiente de la cola
+            (calculando su espera) y la entidad se reenvía por las aristas de salida del bloque hacia el siguiente nodo.
+          </P>
+
+          <H3 id="motor-metricas">5.8 Cálculo de métricas de salida</H3>
+          <P>
+            La utilización de cada recurso es el tiempo que estuvo ocupado dentro del horizonte dividido entre su
+            capacidad total (servidores × horizonte). Se acota el tiempo ocupado al horizonte para no sesgar por servicios
+            que terminan después. El cuello de botella es la etapa con mayor utilización.
+          </P>
+          <Code>{`// tiempo ocupado dentro del horizonte
+busy += Math.max(0, Math.min(end, horizon) - Math.min(start, horizon));
+const util = Math.min(100, (busy / (resources * horizon)) * 100);
+
+// cuello de botella = mayor utilización
+perStage.forEach((p, i) => { if (p.util > perStage[bn].util) bn = i; });`}</Code>
+          <P>
+            El resto de los indicadores (espera promedio, tiempo en sistema y entidades procesadas) se obtienen recorriendo
+            la traza y promediando sobre las entidades completadas dentro del horizonte.
+          </P>
         </main>
       </div>
     </div>

@@ -57,8 +57,21 @@ export function Header({ maxWidth = 1320 }: { maxWidth?: number }) {
           })}
         </nav>
 
-        {/* Derecha: enlace a documentación */}
-        <div className="flex flex-1 justify-end">
+        {/* Derecha: enlaces a manual y documentación */}
+        <div className="flex flex-1 items-center justify-end gap-1">
+          <Link
+            href="/manual"
+            aria-current={pathname === '/manual' ? 'page' : undefined}
+            className={
+              'inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[12.5px] font-medium no-underline transition-colors ' +
+              (pathname === '/manual' ? 'text-[#5a5ad6]' : 'text-[#9a9aa4] hover:text-[#62626c]')
+            }
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H6.5A2.5 2.5 0 0 0 4 21.5zM19 17H6.5A2.5 2.5 0 0 0 4 19.5" />
+            </svg>
+            Manual
+          </Link>
           <Link
             href="/documentacion"
             aria-current={pathname === '/documentacion' ? 'page' : undefined}
