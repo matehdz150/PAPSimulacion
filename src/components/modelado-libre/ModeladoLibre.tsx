@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   DEFAULT_EDGES,
   DEFAULT_NODES,
@@ -13,6 +13,7 @@ import {
 } from '@/lib/simulate-freeform';
 import { Canvas } from './Canvas';
 import { ResultsSheet } from './ResultsSheet';
+import { validateGraph } from './validate';
 import { Header } from '@/components/Header';
 
 function BlockBtn({ onClick, icon, label }: { onClick: () => void; icon: React.ReactNode; label: string }) {
@@ -38,8 +39,12 @@ export default function ModeladoLibre() {
   const [connecting, setConnecting] = useState<{ from: string; fromPort?: 'A' | 'B'; x: number; y: number } | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetExpanded, setSheetExpanded] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
   const idSeq = useRef(4);
   const runIdx = useRef(0);
+
+  // Al editar el grafo, se limpian los errores de validación previos.
+  useEffect(() => setErrors([]), [nodes, edges]);
 
   const newId = () => 'n' + idSeq.current++;
 
@@ -65,6 +70,13 @@ export default function ModeladoLibre() {
   };
 
   const run = () => {
+    // Validar el grafo antes de simular
+    const problems = validateGraph(nodes, edges);
+    if (problems.length) {
+      setErrors(problems);
+      return;
+    }
+    setErrors([]);
     setPhase('running');
     runIdx.current += 1;
     const seedBase = nodes.reduce((a, n, i) => a + (n.service || n.interarrival || n.splitA || 1) * (i + 7), 0) | 0;
@@ -123,6 +135,34 @@ export default function ModeladoLibre() {
             throughputInfo={throughputInfo}
             bottleneckId={result ? result.bottleneckId : null}
           />
+
+          {/* Aviso de validación del modelo */}
+          {errors.length > 0 && (
+            <div className="absolute left-4 top-4 z-30 w-[360px] max-w-[calc(100%-2rem)] rounded-xl border border-[#f0c9a8] bg-[#fdf3e9] p-3.5 shadow-[0_4px_16px_-4px_rgba(24,24,27,.2)]">
+              <div className="flex items-start gap-2.5">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c0782d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-px flex-none">
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <path d="M12 9v4M12 17h.01" />
+                </svg>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13px] font-semibold text-[#b45a1f]">El modelo no es válido</div>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[12.5px] leading-[1.45] text-[#8a5a30]">
+                    {errors.map((e, i) => (
+                      <li key={i}>{e}</li>
+                    ))}
+                  </ul>
+                  <div className="mt-1.5 text-[11.5px] text-[#b08a5a]">Corrige las conexiones y vuelve a ejecutar.</div>
+                </div>
+                <button
+                  onClick={() => setErrors([])}
+                  aria-label="Cerrar aviso"
+                  className="grid h-6 w-6 flex-none place-items-center rounded-md text-[#b45a1f] transition-colors hover:bg-[#f6e3cf]"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Controles superiores derechos: horizonte + simular */}
           <div className="absolute right-4 top-4 z-20 flex items-center gap-2">
